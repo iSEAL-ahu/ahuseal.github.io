@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"iseal.ac.cn","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="最近ChatGPT非常火，去体验之后确实有被惊艳到，也对OpenAI上的人工智能模型比较感兴趣，于是想着复刻一个ChatGPT，利用官方提供的包和api，可以非常简单地复刻出一个ChatGPT，下面是复盘开发过程的记录。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于OpenAI的Chatbot开发记录">
+<meta property="og:url" content="https://iseal.ac.cn/2022/12/18/%E5%9F%BA%E4%BA%8EOpenAI%E7%9A%84Chatbot%E5%BC%80%E5%8F%91%E8%AE%B0%E5%BD%95%E2%80%94Yvling/index.html">
+<meta property="og:site_name" content="iSEAL">
+<meta property="og:description" content="最近ChatGPT非常火，去体验之后确实有被惊艳到，也对OpenAI上的人工智能模型比较感兴趣，于是想着复刻一个ChatGPT，利用官方提供的包和api，可以非常简单地复刻出一个ChatGPT，下面是复盘开发过程的记录。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/image-20221217232956129.png">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/image-20221217222120806.png">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/1.jpg">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/2.jpg">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/3.jpg">
+<meta property="og:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/1EE60F238611E931B3ABCE4FCA1A182F.jpg">
+<meta property="article:published_time" content="2022-12-18T11:53:54.000Z">
+<meta property="article:modified_time" content="2022-12-18T12:03:05.122Z">
+<meta property="article:author" content="iSEAL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/image-20221217232956129.png">
+
+<link rel="canonical" href="https://iseal.ac.cn/2022/12/18/%E5%9F%BA%E4%BA%8EOpenAI%E7%9A%84Chatbot%E5%BC%80%E5%8F%91%E8%AE%B0%E5%BD%95%E2%80%94Yvling/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于OpenAI的Chatbot开发记录 | iSEAL</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">iSEAL</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-新闻">
+
+    <a href="/news/" rel="section"><i class="fas fa-bell fa-fw"></i>新闻</a>
+
+  </li>
+        <li class="menu-item menu-item-技术">
+
+    <a href="/tech/" rel="section"><i class="fa fa-star fa-fw"></i>技术</a>
+
+  </li>
+        <li class="menu-item menu-item-队伍">
+
+    <a href="/team/" rel="section"><i class="fas fa-user-friends fa-fw"></i>队伍</a>
+
+  </li>
+        <li class="menu-item menu-item-赛事">
+
+    <a href="/matches/" rel="section"><i class="fa fa-user-secret fa-fw"></i>赛事</a>
+
+  </li>
+        <li class="menu-item menu-item-投稿">
+
+    <a href="/post" rel="section"><i class="fab fa-stack-overflow fa-fw"></i>投稿</a>
+
+  </li>
+        <li class="menu-item menu-item-我们">
+
+    <a href="/about/" rel="section"><i class="fa fa-home fa-fw"></i>我们</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://iseal.ac.cn/2022/12/18/%E5%9F%BA%E4%BA%8EOpenAI%E7%9A%84Chatbot%E5%BC%80%E5%8F%91%E8%AE%B0%E5%BD%95%E2%80%94Yvling/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="iSEAL">
+      <meta itemprop="description" content="Information Security Engineering innovAtion Laboratory,<br>Anhui University">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="iSEAL">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于OpenAI的Chatbot开发记录
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-12-18 19:53:54 / 修改时间：20:03:05" itemprop="dateCreated datePublished" datetime="2022-12-18T19:53:54+08:00">2022-12-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近ChatGPT非常火，去体验之后确实有被惊艳到，也对OpenAI上的人工智能模型比较感兴趣，于是想着复刻一个ChatGPT，利用官方提供的包和api，可以非常简单地复刻出一个ChatGPT，下面是复盘开发过程的记录。</p>
+<span id="more"></span>
+
+
+
+<p>作者：Yvling</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/Fangnan700/Chatbot">https://github.com/Fangnan700/Chatbot</a></p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/image-20221217232956129.png" alt="image-20221217232956129"></p>
+<h2 id="配置项目"><a href="#配置项目" class="headerlink" title="配置项目"></a>配置项目</h2><ul>
+<li><p>我所使用的开发环境是Ubuntu22.04 + Python3.10 + Pycharm2022.3；</p>
+</li>
+<li><p>项目后端采用Flask框架，前端采用Bootstrap框架，前后端使用json进行交互。</p>
+</li>
+</ul>
+<p><strong>项目结构：</strong></p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/image-20221217222120806.png" alt="image-20221217222120806"></p>
+<h2 id="编写代码"><a href="#编写代码" class="headerlink" title="编写代码"></a>编写代码</h2><h3 id="前端："><a href="#前端：" class="headerlink" title="前端："></a>前端：</h3><p>前端需要的框架文件：</p>
+<ul>
+<li>jquery-3.6.2.min.js</li>
+<li>bootstrap.min.js</li>
+<li>bootstrap.min.css</li>
+</ul>
+<p>文件可以到官网直接下载。</p>
+<p><strong>index.html</strong></p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">&quot;zh&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1.0&quot;</span> <span class="attr">maximum-scale</span>=<span class="string">&quot;1.0&quot;</span> <span class="attr">user-scalable</span>=<span class="string">&quot;0&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>Chatbot.<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;js/bootstrap.min.js&#x27;) &#125;&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;js/jquery-3.6.2.min.js&#x27;) &#125;&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;icon&quot;</span> <span class="attr">href</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;img/robot.png&#x27;) &#125;&#125;&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;stylesheet&quot;</span> <span class="attr">type</span>=<span class="string">&quot;text/css&quot;</span> <span class="attr">href</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;css/bootstrap.min.css&#x27;) &#125;&#125;&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;stylesheet&quot;</span> <span class="attr">type</span>=<span class="string">&quot;text/css&quot;</span> <span class="attr">href</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;css/index.css&#x27;) &#125;&#125;&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;container-fluid&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row-cols-auto&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;main&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;img/logo.png&#x27;) &#125;&#125;&quot;</span> <span class="attr">width</span>=<span class="string">&quot;320px&quot;</span> <span class="attr">height</span>=<span class="string">&quot;100px&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row-cols-auto&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;col&quot;</span> <span class="attr">id</span>=<span class="string">&quot;content&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;col&quot;</span> <span class="attr">id</span>=<span class="string">&quot;response&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line">     <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row&quot;</span> <span class="attr">id</span>=<span class="string">&quot;loading_frame&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;spinner-border text-light&quot;</span> <span class="attr">role</span>=<span class="string">&quot;status&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">&quot;visually-hidden&quot;</span>&gt;</span>Loading...<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row-cols-auto&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;col textarea&quot;</span> <span class="attr">id</span>=<span class="string">&quot;input&quot;</span> <span class="attr">contenteditable</span>=<span class="string">&quot;true&quot;</span> <span class="attr">onfocus</span>=<span class="string">&quot;clear_input()&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row-cols-auto&quot;</span> <span class="attr">id</span>=<span class="string">&quot;btn_group&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">&quot;btn btn-secondary&quot;</span> <span class="attr">id</span>=<span class="string">&quot;clear_btn&quot;</span> <span class="attr">onclick</span>=<span class="string">&quot;clear_history()&quot;</span> <span class="attr">onmo</span>&gt;</span>清 空<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">&quot;btn btn-secondary&quot;</span> <span class="attr">id</span>=<span class="string">&quot;send_btn&quot;</span> <span class="attr">onclick</span>=<span class="string">&quot;send()&quot;</span>&gt;</span>发 送<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;row-cols-auto&quot;</span> <span class="attr">id</span>=<span class="string">&quot;footer_frame&quot;</span>&gt;</span></span><br><span class="line">        Copyright © 2022</span><br><span class="line">        <span class="tag">&lt;<span class="name">a</span> <span class="attr">class</span>=<span class="string">&quot;link-light&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://github.com/Fangnan700&quot;</span>&gt;</span>Fang nan.<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line">        All rights reserved.</span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;&#123;&#123; url_for(&#x27;static&#x27;, filename=&#x27;js/index.js&#x27;) &#125;&#125;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>index.css</strong></p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">body</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">background</span>: <span class="number">#333333</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-class">.main</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">text-align</span>: center;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#content</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">height</span>: auto;</span><br><span class="line">    <span class="attribute">min-height</span>: <span class="number">480px</span>;</span><br><span class="line">    <span class="attribute">margin-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">padding-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">padding-bottom</span>: <span class="number">80px</span>;</span><br><span class="line">    <span class="attribute">padding-left</span>: <span class="number">50px</span>;</span><br><span class="line">    <span class="attribute">padding-right</span>: <span class="number">50px</span>;</span><br><span class="line">    <span class="attribute">background</span>: <span class="built_in">rgba</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">    backdrop-<span class="attribute">filter</span>: <span class="built_in">blur</span>(<span class="number">10px</span>);</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">15px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#response</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">height</span>: auto;</span><br><span class="line">    <span class="attribute">min-height</span>: <span class="number">380px</span>;</span><br><span class="line">    <span class="attribute">color</span>: <span class="number">#ffffff</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#loading_frame</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">margin-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">margin-left</span>: auto;</span><br><span class="line">    <span class="attribute">margin-right</span>: auto;</span><br><span class="line">    <span class="attribute">text-align</span>: center;</span><br><span class="line">    <span class="attribute">visibility</span>: hidden;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#input</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="attribute">height</span>: auto;</span><br><span class="line">    <span class="attribute">min-height</span>: <span class="number">50px</span>;</span><br><span class="line">    <span class="attribute">line-height</span>: <span class="number">50px</span>;</span><br><span class="line">    <span class="attribute">margin-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">padding-left</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">padding-right</span>: <span class="number">10px</span>;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">15px</span>;</span><br><span class="line">    <span class="attribute">background</span>: black;</span><br><span class="line">    <span class="attribute">color</span>: <span class="number">#ffffff</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#btn_group</span> &#123;</span><br><span class="line">    <span class="attribute">margin-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">margin-bottom</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">text-align</span>: right;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#clear_btn</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100px</span>;</span><br><span class="line">    <span class="attribute">margin-left</span>: auto;</span><br><span class="line">    <span class="attribute">margin-right</span>: auto;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">10px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#send_btn</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100px</span>;</span><br><span class="line">    <span class="attribute">margin-left</span>: <span class="number">10px</span>;</span><br><span class="line">    <span class="attribute">margin-right</span>: auto;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">10px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="selector-id">#footer_frame</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">230px</span>;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">line-height</span>: <span class="number">30px</span>;</span><br><span class="line">    <span class="attribute">margin-top</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">margin-left</span>: auto;</span><br><span class="line">    <span class="attribute">margin-right</span>: auto;</span><br><span class="line">    <span class="attribute">text-align</span>: center;</span><br><span class="line">    <span class="attribute">color</span>: <span class="number">#ffffff</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>index.js</strong></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 获取页面元素并创建全局变量</span></span><br><span class="line"><span class="keyword">let</span> loading_frame = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;loading_frame&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> _input = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;input&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> response = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;response&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> clear_btn = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;clear_btn&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> send_btn = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;send_btn&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> history;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置提示语</span></span><br><span class="line">response.<span class="property">innerText</span> = <span class="string">&quot;hi～我是Chatbot，你可以把你的问题写在下方，然后发送给我，我会尽力为你解答😆&quot;</span></span><br><span class="line">_input.<span class="property">innerText</span> = <span class="string">&quot;请把你的问题写在这里&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送请求</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">send</span>(<span class="params"></span>) &#123;</span><br><span class="line">    send_btn.<span class="title function_">blur</span>();</span><br><span class="line">    loading_frame.<span class="property">style</span>.<span class="property">visibility</span> = <span class="string">&quot;visible&quot;</span>;</span><br><span class="line">    <span class="keyword">let</span> value = _input.<span class="property">innerText</span>;</span><br><span class="line">    history = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;response&quot;</span>).<span class="property">innerText</span>;</span><br><span class="line">    response.<span class="property">innerText</span> = history + <span class="string">&quot;\n\nQ:\n\n&quot;</span> + value;</span><br><span class="line">    <span class="keyword">let</span> data = &#123;<span class="string">&quot;content&quot;</span>: value&#125;;</span><br><span class="line">    $.<span class="title function_">ajax</span>(&#123;</span><br><span class="line">        <span class="attr">url</span>: <span class="string">&quot;/send&quot;</span>,</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&quot;post&quot;</span>,</span><br><span class="line">        <span class="attr">contentType</span>: <span class="string">&#x27;application/json&#x27;</span>,</span><br><span class="line">        <span class="attr">data</span>: <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(data),</span><br><span class="line">        <span class="attr">success</span>: <span class="keyword">function</span> (<span class="params">result</span>) &#123;</span><br><span class="line">            history = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;response&quot;</span>).<span class="property">innerText</span>;</span><br><span class="line">            response.<span class="property">innerText</span> = history + <span class="string">&quot;\n\nA:&quot;</span> + result;</span><br><span class="line">            loading_frame.<span class="property">style</span>.<span class="property">visibility</span> = <span class="string">&quot;hidden&quot;</span>;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">error</span>: <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">            loading_frame.<span class="property">style</span>.<span class="property">visibility</span> = <span class="string">&quot;hidden&quot;</span>;</span><br><span class="line">            response.<span class="property">innerText</span> = <span class="string">&quot;好像出了点问题哦，稍后再试试吧～&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除历史内容</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">clear_input</span>(<span class="params"></span>) &#123;</span><br><span class="line">    _input.<span class="property">innerText</span> = <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">clear_history</span>(<span class="params"></span>) &#123;</span><br><span class="line">    clear_btn.<span class="title function_">blur</span>();</span><br><span class="line">    _input.<span class="property">innerText</span> = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    response.<span class="property">innerText</span> = <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="后端："><a href="#后端：" class="headerlink" title="后端："></a>后端：</h3><p>后端使用Python+Flask实现，同时需要引入几个包：</p>
+<ul>
+<li>openai（OpenAI官方提供的包，可以非常方便地发送请求）</li>
+<li>dotenv（用于读取环境变量，OpenAI的api-key将在环境变量文件中设置）</li>
+</ul>
+<p>以上两个包可以直接用pip进行安装。</p>
+<p>在项目根目录创建.flaskenv文件并写入配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FLASK_APP=app</span><br><span class="line">FLASK_ENV=development</span><br><span class="line">OPENAI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<p>其中OPENAI_API_KEY填写的是从OpenAI官网申请到的api-key，申请网址：</p>
+<p><a target="_blank" rel="noopener" href="https://beta.openai.com/api">https://beta.openai.com/api</a></p>
+<p><strong>app.py</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> openai</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line">openai.api_key = os.environ.get(<span class="string">&#x27;OPENAI_API_KEY&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span>, methods=(<span class="params"><span class="string">&#x27;GET&#x27;</span>, <span class="string">&#x27;POST&#x27;</span></span>)</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">index</span>():</span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&#x27;index.html&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/send&#x27;</span>, methods=(<span class="params"><span class="string">&#x27;GET&#x27;</span>, <span class="string">&#x27;POST&#x27;</span></span>)</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send</span>():</span><br><span class="line">    <span class="comment"># 解析前端发送的数据</span></span><br><span class="line">    recv = request.json</span><br><span class="line">    data = recv[<span class="string">&#x27;content&#x27;</span>]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 核心代码，用于向OpenAI的服务器发送请求数据</span></span><br><span class="line">    response = openai.Completion.create(</span><br><span class="line">        model=<span class="string">&quot;text-davinci-003&quot;</span>,	<span class="comment"># 选择要使用的模型</span></span><br><span class="line">        prompt=data + <span class="string">&#x27;.&#x27;</span>,			<span class="comment"># 请求的数据，即向模型输入的语句，需要以&quot;.&quot;结尾</span></span><br><span class="line">        temperature=<span class="number">0.8</span>,			<span class="comment"># 参数，范围0～1，数值越大输出的数据更独特，数值越小输出更准确</span></span><br><span class="line">        n=<span class="number">1</span>,						<span class="comment"># 为每个提示生成多少结果，默认为1</span></span><br><span class="line">        max_tokens=<span class="number">2048</span>				<span class="comment"># 单次输出的最大令牌数，大多数模型支持的最大值为2048</span></span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> response.choices[<span class="number">0</span>].text <span class="comment"># 从服务器返回的数据中取出想要的结果</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    app.run()</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="部署项目"><a href="#部署项目" class="headerlink" title="部署项目"></a>部署项目</h2><p>这里推荐使用境外的服务器，国内可以通过http请求访问到，将输入的内容发送到服务器，再由服务器转发到OpenAI的服务器上，由此可以在不使用科学上网的情况下，实现与AI机器人的交互。</p>
+<p>为了便于在服务器上启动项目，我使用shell脚本来完成项目的启动：</p>
+<p><strong>run.sh</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">! /bin/bash</span></span><br><span class="line">./venv/bin/python -m flask run --host 0.0.0.0 --port 80</span><br></pre></td></tr></table></figure>
+
+<p>编写好的脚本放在项目根目录下。</p>
+<p>将项目连同虚拟环境一起打包，上传到服务器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scp Chatbot.zip username@host:/path</span><br></pre></td></tr></table></figure>
+
+<p>上传完成后解压：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unzip Chatbot.zip</span><br></pre></td></tr></table></figure>
+
+<p>进入项目文件下并给脚本赋予权限：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd Chatbot</span><br><span class="line">chmod +x run.sh</span><br></pre></td></tr></table></figure>
+
+<p>开放80端口：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ufw allow 80</span><br></pre></td></tr></table></figure>
+
+<p>在后台不中断地启动项目：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setsid ./run.sh &amp;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>这么启动在ssh连接断开后项目不会停止。</p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/1.jpg" alt="1"></p>
+<p>至此，通过服务器的公网IP就可以访问到项目了，如果访问不到，就要到服务器的管理面板查看端口是否开放。</p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/2.jpg" alt="2"></p>
+<p>在不使用vpn的情况下也能正常使用：</p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/3.jpg" alt="3"></p>
+<p>手机端也能正常使用：</p>
+<p><img src="https://yvling-typora-image-1257337367.cos.ap-nanjing.myqcloud.com/typora/1EE60F238611E931B3ABCE4FCA1A182F.jpg" alt="1EE60F238611E931B3ABCE4FCA1A182F"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/12/10/22%E5%B9%B4%E7%9C%81%E8%B5%9B%E8%8E%B7%E5%A5%96/" rel="prev" title="信息安全工程创新实验室学生在全国大学生信息安全竞赛安徽省赛中荣获佳绩">
+      <i class="fa fa-chevron-left"></i> 信息安全工程创新实验室学生在全国大学生信息安全竞赛安徽省赛中荣获佳绩
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/12/18/%E9%80%86%E5%90%91%E4%B8%AD%E7%9A%84%E5%B8%B8%E8%A7%81%E5%AF%86%E7%A0%81%E7%9A%84%E8%AF%86%E5%88%AB%E2%80%94Sink/" rel="next" title="逆向中的常见密码的识别">
+      逆向中的常见密码的识别 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">配置项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">编写代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E7%AB%AF%EF%BC%9A"><span class="nav-number">2.1.</span> <span class="nav-text">前端：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8E%E7%AB%AF%EF%BC%9A"><span class="nav-number">2.2.</span> <span class="nav-text">后端：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E9%A1%B9%E7%9B%AE"><span class="nav-number">3.</span> <span class="nav-text">部署项目</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">iSEAL</p>
+  <div class="site-description" itemprop="description">Information Security Engineering innovAtion Laboratory,<br>Anhui University</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ahuseal" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ahuseal" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:admin@iseal.ac.cn" title="E-Mail → mailto:admin@iseal.ac.cn"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">iSEAL</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
